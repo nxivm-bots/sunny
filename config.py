@@ -41,7 +41,7 @@ PAYMENT_TEXT = os.getenv('PAYMENT_TEXT', 'To get Plan and payment details press 
 DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://denji3494:denji3494@cluster0.bskf1po.mongodb.net/")
 DB_NAME = os.environ.get("DATABASE_NAME", "sunny")
 
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-10020756565")) #database save channel id 
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-1002320610978")) #database save channel id 
 FORCE_SUB_CHANNEL = int(os.environ.get("FORCE_SUB_CHANNEL", "-1001707354372"))
 FORCE_SUB_CHANNEL2 = int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001677928096"))
 FORCE_SUB_CHANNEL3 = int(os.environ.get("FORCE_SUB_CHANNEL3", "-1001707354372"))
