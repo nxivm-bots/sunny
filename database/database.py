@@ -1,11 +1,36 @@
 
 import motor.motor_asyncio
-from config import DB_URI, DB_NAME
+from config import DB_URI, DB_NAME ,REFERTIME
+
 
 dbclient = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
 database = dbclient[DB_NAME]
 
 user_data = database['users']
+
+channels_collection = database['force_sub_channels']
+
+# Utility to fetch all channels
+async def get_all_channels():
+    channel_docs = channels_collection.find()
+    return [doc['channel_id'] async for doc in channel_docs]
+
+# Add a new channel
+async def add_channel(channel_id: int):
+    await channels_collection.update_one(
+        {'channel_id': channel_id},
+        {'$set': {'channel_id': channel_id}},  # Upsert
+        upsert=True
+    )
+
+# Remove a channel
+async def remove_channel(channel_id: int):
+    await channels_collection.delete_one({'channel_id': channel_id})
+
+# List all channels
+async def list_channels():
+    return await get_all_channels()
+
 
 default_verify = {
     'is_verified': False,
@@ -13,20 +38,17 @@ default_verify = {
     'verify_token': "",
     'link': "",
     'referrer': None,  # User ID of the referrer
-    'referred': False 
+    'referred': False,
+    'referral_count': 0,  # Count of successful referrals
+
 }
 
-def new_user(id):
+
+# Utility Functions
+def new_user(user_id):
     return {
-        '_id': id,
-        'verify_status': {
-            'is_verified': False,
-            'verified_time': "",
-            'verify_token': "",
-            'link': "",
-            'referrer': None,  # User ID of the referrer
-            'referred': False 
-        }
+        '_id': user_id,
+        'verify_status': default_verify.copy(),
     }
 
 async def present_user(user_id: int):
