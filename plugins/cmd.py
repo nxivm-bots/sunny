@@ -9,33 +9,97 @@ from pyrogram.enums import ParseMode
 import time
 from database.database import *
 
-@Bot.on_message(filters.command('time') & filters.private )
-async def status_command(bot: Bot, message: Message):
+# Command: Add a Channel
+@Bot.on_message(filters.command("add_channel") & filters.user(ADMINS))  # ADMINS = Admin User ID
+async def add_force_sub_channel(client, message):
+    try:
+        args = message.text.split(maxsplit=1)
+        if len(args) != 2:
+            await message.reply("Usage: /add_channel <channel_id>")
+            return
+        channel_id = int(args[1])
+        await add_channel(channel_id)
+        await message.reply(f"✅ Channel {channel_id} has been added to the force-subscription list.")
+    except Exception as e:
+        await message.reply(f"❌ Error adding channel: {e}")
+
+# Command: Remove a Channel
+@Bot.on_message(filters.command("remove_channel") & filters.user(ADMINS))
+async def remove_force_sub_channel(client, message):
+    try:
+        args = message.text.split(maxsplit=1)
+        if len(args) != 2:
+            await message.reply("Usage: /remove_channel <channel_id>")
+            return
+        channel_id = int(args[1])
+        await remove_channel(channel_id)
+        await message.reply(f"✅ Channel {channel_id} has been removed from the force-subscription list.")
+    except Exception as e:
+        await message.reply(f"❌ Error removing channel: {e}")
+
+# Command: List All Channels
+@Bot.on_message(filters.command("list_channels") & filters.user(ADMINS))
+async def list_force_sub_channels(client, message):
+    try:
+        channels = await list_channels()
+        if not channels:
+            await message.reply("No channels in the force-subscription list.")
+            return
+        channel_list = "\n".join([f"- {channel_id}" for channel_id in channels])
+        await message.reply(f"📜 Force-Subscription Channels:\n{channel_list}")
+    except Exception as e:
+        await message.reply(f"❌ Error listing channels: {e}")
+
+
+@Bot.on_message(filters.command('profile') & filters.private)
+async def time_command(client: Client, message: Message):
     user_id = message.from_user.id
     verify_status = await db_verify_status(user_id)
 
     is_verified = verify_status.get("is_verified", False)
     verified_time = verify_status.get("verified_time", 0)
-    referred_by = verify_status.get("referrer", None)
+    referral_count = verify_status.get("referral_count", 0)
+    referrer = verify_status.get("referrer", None)
+
+    remaining_time = (
+        max(0, int(verified_time - time.time())) if is_verified else "N/A"
+    )
+    referral_status = (
+        f"Yes (Referred by {referrer})" if referrer else "No Referrer"
+    )
 
     status_message = (
-        f"Your Status:\n"
-        f"- Verified: {'Yes' if is_verified else 'No'}\n"
-        f"- Verification Time: {time.ctime(verified_time) if verified_time else 'N/A'}\n"
-        f"- Referred By: {referred_by if referred_by else 'None'}"
+        f"🔍 Your Verification Status 🔍\n\n"
+        f"- Verified: {'✅ Yes' if is_verified else '❌ No'}\n"
+        f"- Referral Status: {referral_status}\n"
+        f"- Remaining Usage Time: {remaining_time if remaining_time == 'N/A' else f'{remaining_time // 3600} hrs {remaining_time % 3600 // 60} mins'}\n"
+        f"- Referrals Made: {referral_count}\n\n"
+        f"📌 Keep referring friends to earn more usage time!"
     )
     await message.reply(status_message)
 
-@Client.on_message(filters.command('refer') & filters.private )
-async def referral_command(client: Client, message: Message):
-    user_id = message.from_user.id  # Correctly get the user ID
-    bot_username = (await client.get_me()).username  # Get the bot's username dynamically
-    rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"  # Use the correct user ID here
 
-    await message.reply(
-        f"Your referral link:\n{rlink}\n"
-        "Share this link with others to earn benefits!"
+@Bot.on_message(filters.command('refer') & filters.private)
+async def refer_command(client: Client, message: Message):
+    user_id = message.from_user.id
+    referral_link = f"https://t.me/{client.username}?start=refer_{user_id}"
+    verify_status = await db_verify_status(user_id)
+
+    referral_count = verify_status.get("referral_count", 0)
+
+    referral_message = (
+        f"🚀 Your Personal Referral Link 🚀\n\n"
+        f"📎 Link: {referral_link}\n\n"
+        f"🎉 How it Works:\n"
+        f"- Share this link with your friends.\n"
+        f"- When they join, both of you get an extra {REFERTIME} hours of usage time!\n"
+        f"- The more friends you refer, the more time you earn!\n\n"
+        f"📊 Your Referral Stats:\n"
+        f"- Referrals Made: {referral_count}\n\n"
+        f"Keep sharing and enjoy the benefits!"
     )
+    await message.reply(referral_message)
+
 
 
 # /help command to show available commands
@@ -117,7 +181,7 @@ async def my_plan(bot: Bot, message: Message):
             
             buttons = InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("Upgrade Plan", callback_data="premium")],
+                    [InlineKeyboardButton("Upgrade Plan", callback_data="show_plans")],
                     [InlineKeyboardButton("🔒 Close", callback_data="close")],
                     [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
                 ]
@@ -132,7 +196,7 @@ async def my_plan(bot: Bot, message: Message):
             
             buttons = InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("Renew Plan", callback_data="premium")],
+                    [InlineKeyboardButton("Renew Plan", callback_data="show_plans")],
                     [InlineKeyboardButton("🔒 Close", callback_data="close")],
                     [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
                 ]
@@ -144,7 +208,7 @@ async def my_plan(bot: Bot, message: Message):
         
         buttons = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("View Plans", callback_data="premium")],
+                [InlineKeyboardButton("View Plans", callback_data="show_plans")],
                 [InlineKeyboardButton("🔒 Close", callback_data="close")],
                 [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
             ]
@@ -158,7 +222,7 @@ async def my_plan(bot: Bot, message: Message):
 async def show_plans(bot: Bot, message: Message):
     plans_text = PAYMENT_TEXT 
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("𝖡𝗎𝗒 𝗌𝗎𝖻𝗌𝖼𝗋𝗂𝗉𝗍𝗂𝗈𝗇 | 𝖭𝗈 𝖠𝖽𝗌", callback_data="premium")],
+        [InlineKeyboardButton("Pay via UPI", callback_data="upi_info")],
         [InlineKeyboardButton("🔒 Close", callback_data="close")],
         [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
     ])
@@ -167,13 +231,18 @@ async def show_plans(bot: Bot, message: Message):
 # Command to show UPI payment QR code and instructions
 @Bot.on_message(filters.command('upi') & filters.private)
 async def upi_info(bot: Bot, message: Message):
-    plans_text = PAYMENT_TEXT
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("𝖡𝗎𝗒 𝗌𝗎𝖻𝗌𝖼𝗋𝗂𝗉𝗍𝗂𝗈𝗇 | 𝖭𝗈 𝖠𝖽𝗌", callback_data="premium")],
-        [InlineKeyboardButton("Contact Owner", url=f"https://t.me/{OWNER}")],
-        [InlineKeyboardButton("🔒 Close", callback_data="close")]
-    ])
-    await message.reply(plans_text, reply_markup=buttons, parse_mode=ParseMode.HTML)
+    await bot.send_photo(
+        chat_id=message.chat.id,
+        photo=PAYMENT_QR,
+        caption=PAYMENT_TEXT,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("Contact Owner", url=f"https://t.me/{OWNER}")],
+                [InlineKeyboardButton("🔒 Close", callback_data="close")]
+            ]
+        )
+    )
 
 # Command to retrieve a list of active premium users (admin only)
 @Bot.on_message(filters.private & filters.command('getpremiumusers') & filters.user(ADMINS))

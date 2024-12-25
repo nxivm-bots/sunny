@@ -107,63 +107,94 @@ async def delete_notification_after_delay(client, chat_id, message_id, delay):
     except Exception as e:
         print(f"Error deleting notification {message_id} in chat {chat_id}: {e}")
 
-import time
-
-async def grant_referral_benefit(referrer_id, referred_id):
-    # Logic for granting referral benefits to both the referrer and referred user
-    # First, get the current status of the referrer and referred user from the database
+# Referral Grant Logic with Notifications
+async def grant_referral_benefit(client, referrer_id, referred_id):
+    # Fetch data for the referrer
     referrer_data = await db_verify_status(referrer_id)
+    if not referrer_data:  # Ensure the referrer exists
+        print(f"Referrer {referrer_id} does not exist in the database.")
+        return
+
+    # Update the referrer's verification status and referral count
+    referrer_data['is_verified'] = True
+    referrer_data['verified_time'] = max(referrer_data.get('verified_time', 0), time.time()) + (REFERTIME * 60 * 60)
+    referrer_data['referral_count'] += 1
+    await db_update_verify_status(referrer_id, referrer_data)
+
+    # Fetch data for the referred user
     referred_data = await db_verify_status(referred_id)
+    if not referred_data:  # Ensure the referred user exists
+        print(f"Referred user {referred_id} does not exist in the database.")
+        return
 
-    # If referrer data exists, update their verification status and time
-    if referrer_data:
-        referrer_data['is_verified'] = True
-        referrer_data['verified_time'] = time.time() + (REFERTIME * 60 * 60)  # Add 4 hours
-        await db_update_verify_status(referrer_id, referrer_data)  # Save updated referrer data
+    # Update the referred user's verification status
+    referred_data['is_verified'] = True
+    referred_data['verified_time'] = max(referred_data.get('verified_time', 0), time.time()) + (REFERTIME * 60 * 60)
+    referred_data['referred'] = True
+    referred_data['referrer'] = referrer_id
+    await db_update_verify_status(referred_id, referred_data)
 
-    # If referred user data exists, update their verification status and time
-    if referred_data:
-        referred_data['is_verified'] = True
-        referred_data['verified_time'] = time.time() + (REFERTIME * 60 * 60)  # Add 4 hours
-        await db_update_verify_status(referred_id, referred_data)  # Save updated referred user data
+    # Notify the referrer
+    try:
+        await client.send_message(
+            chat_id=referrer_id,
+            text=(
+                f"🎉 Congratulations!\n"
+                f"You have successfully referred a new user (ID: {referred_id}).\n"
+                f"You've earned an extra {REFERTIME} hours of usage time. Keep referring more friends!"
+            )
+        )
+    except Exception as e:
+        print(f"Failed to notify referrer {referrer_id}: {e}")
 
-    print(f"Referral benefits granted to referrer {referrer_id} and referred user {referred_id}")
+    # Notify the referred user
+    try:
+        await client.send_message(
+            chat_id=referred_id,
+            text=(
+                f"✅ Welcome!\n"
+                f"You were successfully referred by user (ID: {referrer_id}).\n"
+                f"You've earned an extra {REFERTIME} hours of usage time. Enjoy!"
+            )
+        )
+    except Exception as e:
+        print(f"Failed to notify referred user {referred_id}: {e}")
+
+    print(f"Referral benefits granted to referrer {referrer_id} and referred user {referred_id}. Notifications sent.")
 
 
+
+# Referral Handling with Notifications
 async def handle_referral(message, user_id, verify_status, client):
-    # Check if the user is trying to use a referral link
     if "refer_" in message.text:
-        _, rid = message.text.split("_", 1)  # Get the referrer ID
+        try:
+            _, referrer_id = message.text.split("_", 1)
 
-        # Check if the user is trying to refer themselves
-        if rid == str(user_id):
-            sent_message = await message.reply("You cannot refer yourself. Please try again.")
-            return
+            # Prevent self-referrals
+            if str(user_id) == referrer_id:
+                await message.reply("🚫 You cannot refer yourself. Please share your link with others.")
+                return
 
-        # Check if the user has already received a referral benefit
-        if verify_status.get('referred', False):  # Default value is False if 'referred' key doesn't exist
-            sent_message = await message.reply("You have already received your referral benefit.")
-            return
+            # Check if the user has already been referred
+            if verify_status.get('referred', False):
+                await message.reply("⚠️ You have already received a referral benefit.")
+                return
 
-        # Check if the referrer is valid
-        # if verify_status.get('referrer') != rid:
-        #     sent_message = await message.reply("Your referral is invalid. Try again by clicking /start.")
-        #     return
+            # Check if the referrer exists in the database
+            if not await present_user(int(referrer_id)):
+                await message.reply("❌ The referral link is invalid. Please ensure it is correct.")
+                return
 
-        # Update the user's status to verified and add referral details
-        await update_verify_status(user_id, is_verified=True, verified_time=time.time(), referrer=rid, referred=True)
-        sent_message = await message.reply(f"Your token was successfully verified and is valid for {REFERTIME} hours.")
+            # Update referred user and grant benefits to both
+            await grant_referral_benefit(client, int(referrer_id), user_id)
+            await message.reply(
+                f"✅ Referral successful!\n\n🎉 You and the referrer (ID: {referrer_id}) have received an extra {REFERTIME} hours of usage time."
+            )
+        except Exception as e:
+            print(f"Error in referral handling: {e}")
+            await message.reply("❌ An error occurred while processing your referral. Please try again.")
 
-        # Check if the user has not been referred yet and update the referrer
-        if verify_status.get('referrer') is None:
-            # Update the user as referred and set the referrer
-            await update_verify_status(user_id, referrer=rid, referred=True)
 
-            # Grant benefits to the referrer (the one who shared the referral link)
-            await grant_referral_benefit(rid , user_id)
-
-            # Notify the user that their referral has been accepted
-            return await message.reply("Referral accepted. Enjoy the benefits!")
      
 
 @Bot.on_message(filters.command('start') & filters.private & subscribed )
@@ -193,6 +224,7 @@ async def start_command(client: Client, message: Message):
         if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
             await update_verify_status(id, is_verified=False)
             
+        # Handle referrals
         await handle_referral(message, user_id, verify_status, client)
 
         # Handle token verification link
@@ -202,7 +234,7 @@ async def start_command(client: Client, message: Message):
                 sent_message = await message.reply("Your token is invalid or expired. Try again by clicking /start.")
                 return
             await update_verify_status(id, is_verified=True, verified_time=time.time())
-            sent_message = await message.reply("Your token was successfully verified and is valid for 6 hours.")
+            sent_message = await message.reply("Your token was successfully verified and is valid for 24 hours.")
 
         
         elif len(message.text) > 7 and (verify_status['is_verified'] or premium_status):
@@ -271,8 +303,9 @@ async def start_command(client: Client, message: Message):
         elif verify_status['is_verified'] or premium_status:
             reply_markup = InlineKeyboardMarkup(
                 [   
-                    [InlineKeyboardButton("Refer Friends", callback_data="refer"), InlineKeyboardButton("Profile", callback_data="time")],
-                    [InlineKeyboardButton("Premium", callback_data="premium"), InlineKeyboardButton("Close", callback_data="close")]
+                    [InlineKeyboardButton("Refer Friends", callback_data="refer")],
+                    [InlineKeyboardButton("About Me", callback_data="about"), InlineKeyboardButton("Profile", callback_data="time")],
+                    [InlineKeyboardButton("✨ Premium", callback_data="upi_info"), InlineKeyboardButton("Close", callback_data="close")]
                     #[InlineKeyboardButton("✨ Premium", callback_data="upi_info")]
                 ]
             )
@@ -297,9 +330,10 @@ async def start_command(client: Client, message: Message):
                 await update_verify_status(id, verify_token=token, link="")
                 link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://telegram.dog/{client.username}?start=verify_{token}')
                 buttons = [
-                    [InlineKeyboardButton("Refer", callback_data="refer"), InlineKeyboardButton("￫ 𝖵𝖾𝗋𝗂𝖿𝗒", url=link)],
-                    [InlineKeyboardButton("￫ 𝖳𝗎𝗍𝗈𝗋𝗂𝖺𝗅", url=TUT_VID)],
-                    [InlineKeyboardButton("Premium", callback_data="premium")]
+                    [InlineKeyboardButton("Refer", callback_data="refer")],
+                    #[InlineKeyboardButton("How to use the bot", url=TUT_VID)],
+                    [InlineKeyboardButton("Tutorial", url=TUT_VID), InlineKeyboardButton("Short Link", url=link)],
+                    [InlineKeyboardButton("✨ Premium", callback_data="upi_info")]
                 ]
                 verification_message = await message.reply_photo(
                     photo=TOKEN_PIC,  # This can be a URL or a file path
@@ -321,7 +355,7 @@ REPLY_ERROR = """<code>Use this command as a replay to any telegram message with
 
 #=====================================================================================##
 
-    
+
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
     buttons = [
@@ -330,7 +364,7 @@ async def not_joined(client: Client, message: Message):
             InlineKeyboardButton(text="Join Channel", url=client.invitelink2),
         ],
         [
-            #InlineKeyboardButton(text="Join Channel", url=client.invitelink3),
+            InlineKeyboardButton(text="Join Channel", url=client.invitelink3),
             #InlineKeyboardButton(text="Join Channel", url=client.invitelink4),
         ]
     ]
@@ -365,7 +399,61 @@ async def not_joined(client: Client, message: Message):
         #disable_web_page_preview=True  # Disable web page preview if necessary
     )
 
+"""
 
+@Bot.on_message(filters.command('start') & filters.private)
+async def not_joined(client: Client, message: Message):
+    user_id = message.from_user.id
+
+    # Fetch all required channels dynamically from the database
+    required_channels = await get_all_channels()
+
+    buttons = []
+    try:
+        # Check user's subscription status for each channel
+        for channel_id in required_channels:
+            try:
+                member = await client.get_chat_member(channel_id, user_id)
+                if member.status not in ["member", "administrator", "creator"]:
+                    # User not subscribed; add button for this channel
+                    chat = await client.get_chat(channel_id)
+                    buttons.append(
+                        [
+                            InlineKeyboardButton(
+                                text=f"Join {chat.title}",
+                                url=f"https://t.me/{chat.username}" if chat.username else client.invitelink,
+                            )
+                        ]
+                    )
+            except Exception as e:
+                print(f"Error fetching membership for channel {channel_id}: {e}")
+                continue
+
+        # Add a 'Try Again' button with the start command
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text='Try Again',
+                    url=f"https://t.me/{client.username}?start={message.text.split(maxsplit=1)[1]}"
+                    if len(message.text.split()) > 1 else f"https://t.me/{client.username}?start={message.command[1]}"
+                )
+            ]
+        )
+
+        # If all buttons are prepared, send a message
+        if buttons:
+            await message.reply(
+                "You must join the following channels to use this bot:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        else:
+            # If user is subscribed to all channels
+            await message.reply("🎉 You have successfully joined all required channels!")
+
+    except Exception as e:
+        print(f"Error in start handler: {e}")
+        await message.reply("An unexpected error occurred. Please try again later.")
+"""
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
