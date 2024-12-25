@@ -104,11 +104,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif data == "show_plans":
         await show_plans(client, query.message)
 
-    from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-elif data == "refer":
+    elif data == "refer":
+    # Get the user ID from the callback query
     user_id = query.from_user.id
+    # Get the bot's username
     bot_username = (await client.get_me()).username
+    # Generate the referral link
     rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"
 
     # Create the inline keyboard with the "Share URL" button
