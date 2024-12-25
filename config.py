@@ -29,7 +29,7 @@ FORCE_PIC = os.environ.get("FORCE_PIC", "https://i.ibb.co/fp6p46v/file-5938.jpg"
 START_PIC = os.environ.get("START_PIC", "https://i.ibb.co/68cNy4b/file-5939.jpg")
 TOKEN_PIC = os.environ.get("TOKEN_PIC", "https://i.ibb.co/fp6p46v/file-5938.jpg")
 bot_username = os.environ.get("bot_username", "sunnyshare_bot")
-REFERTIME = int(os.environ.get("REFERTIME",5)) #hours
+REFERTIME = int(os.environ.get("REFERTIME",1)) #hours
 
 
 #auto delete
