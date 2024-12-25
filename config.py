@@ -18,7 +18,7 @@ API_HASH = os.environ.get("API_HASH", "c89a94fcfda4bc06524d0903977fc81e")
  
 BAN = int(os.environ.get("BAN", "11100131910")) #Owner user id - dont chnge 
 OWNER = os.environ.get("OWNER", "odacchi") #Owner username
-OWNER_ID = inthttps(os.environ.get("OWNER_ID", "1110013191")) #Owner user id
+OWNER_ID = int(os.environ.get("OWNER_ID", "1110013191")) #Owner user id
 OWNER_USERNAME = os.environ.get('OWNER_USERNAME', 'odacchi')
 SUPPORT_GROUP = os.environ.get("SUPPORT_GROUP", "Bloods_Stashy") # WITHOUR @
 CHANNEL = os.environ.get("CHANNEL", "Bloods_Onlyfans") # WITHOUR @
@@ -68,7 +68,7 @@ TUT_VID = os.environ.get("TUT_VID", "https://t.me/tutorita/11")
 # ignore this one
 SECONDS = int(os.getenv("SECONDS", "200")) # auto delete in seconds
 
-PORT = os.environ.get("PORT", "9050")
+PORT = os.environ.get("PORT", "9060")
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 START_MSG = os.environ.get("START_MESSAGE", "Hello {first}\n\nI can store private files in Specified Channel and other users can access it from special link.")
 
