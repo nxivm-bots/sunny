@@ -105,27 +105,22 @@ async def cb_handler(client: Client, query: CallbackQuery):
         await show_plans(client, query.message)
 
     elif data == "refer":
-    # Get the user ID from the callback query
-    user_id = query.from_user.id
-    # Get the bot's username
-    bot_username = (await client.get_me()).username
-    # Generate the referral link
-    rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"
-
-    # Create the inline keyboard with the "Share URL" button
-    keyboard = InlineKeyboardMarkup(
-        [
+        user_id = query.from_user.id
+        bot_username = (await client.get_me()).username
+        rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"
+        
+        keyboard = InlineKeyboardMarkup(
             [
-                InlineKeyboardButton(
-                    "🔁 Share URL",
-                    url=f'https://telegram.me/share/url?url={rlink}'
-                )
+                [
+                    InlineKeyboardButton(
+                        "🔁 Share Link",
+                        url=f'https://telegram.me/share/url?url={rlink}'
+                    )
+                ]
             ]
-        ]
-    )
-
-    # Send the referral link with the button
-    await query.message.reply(
+        )
+        
+        await query.message.reply(
         f"Your referral link:\n{rlink}\n"
         "Share this link with others to earn benefits!",
         reply_markup=keyboard
