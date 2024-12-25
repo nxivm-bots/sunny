@@ -4,24 +4,33 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 
+DEFAULT_CHANNELS = [
+    FORCE_SUB_CHANNEL = int(os.environ.get("FORCE_SUB_CHANNEL", "-1001677928096")),
+    FORCE_SUB_CHANNEL2 = int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001707354372")),
+    FORCE_SUB_CHANNEL3 = int(os.environ.get("FORCE_SUB_CHANNEL3", "-1002340976260")),
+    FORCE_SUB_CHANNEL4 = int(os.environ.get("FORCE_SUB_CHANNEL4", "-1001707354372")),
+
+]
+
+
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "8188039296:AAGZYYRAZf28KY8Nc-Vw0LblDkd4N28_zEc")
 APP_ID = int(os.environ.get("APP_ID", "22505271"))
 API_HASH = os.environ.get("API_HASH", "c89a94fcfda4bc06524d0903977fc81e")
  
 BAN = int(os.environ.get("BAN", "11100131910")) #Owner user id - dont chnge 
 OWNER = os.environ.get("OWNER", "odacchi") #Owner username
-OWNER_ID = int(os.environ.get("OWNER_ID", "1110013191")) #Owner user id
+OWNER_ID = inthttps(os.environ.get("OWNER_ID", "1110013191")) #Owner user id
 OWNER_USERNAME = os.environ.get('OWNER_USERNAME', 'odacchi')
 SUPPORT_GROUP = os.environ.get("SUPPORT_GROUP", "Bloods_Stashy") # WITHOUR @
 CHANNEL = os.environ.get("CHANNEL", "Bloods_Onlyfans") # WITHOUR @
 
 
 #pic
-FORCE_PIC = os.environ.get("FORCE_PIC", "https://envs.sh/Ysc.jpg")
-START_PIC = os.environ.get("START_PIC", "https://envs.sh/YLM.jpg")
-TOKEN_PIC = os.environ.get("TOKEN_PIC", "https://envs.sh/Ysj.jpg")
+FORCE_PIC = os.environ.get("FORCE_PIC", "https://i.ibb.co/fp6p46v/file-5938.jpg")
+START_PIC = os.environ.get("START_PIC", "https://i.ibb.co/68cNy4b/file-5939.jpg")
+TOKEN_PIC = os.environ.get("TOKEN_PIC", "https://i.ibb.co/fp6p46v/file-5938.jpg")
 bot_username = os.environ.get("bot_username", "sunnyshare_bot")
-REFERTIME = int(os.environ.get("REFERTIME",4)) #hours
+REFERTIME = int(os.environ.get("REFERTIME",5)) #hours
 
 
 #auto delete
@@ -42,17 +51,20 @@ DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://kratosnigger:GuH0qHewCzuy
 DB_NAME = os.environ.get("DATABASE_NAME", "sunny")
 
 CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-1002320610978")) #database save channel id 
-FORCE_SUB_CHANNEL = int(os.environ.get("FORCE_SUB_CHANNEL", "-1001707354372"))
-FORCE_SUB_CHANNEL2 = int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001677928096"))
-FORCE_SUB_CHANNEL3 = int(os.environ.get("FORCE_SUB_CHANNEL3", "-1001707354372"))
-FORCE_SUB_CHANNEL4 = int(os.environ.get("FORCE_SUB_CHANNEL4", "-1001677928096"))
 
-#Shortner (token system) 
+
+FORCE_SUB_CHANNEL = int(os.environ.get("FORCE_SUB_CHANNEL", "-1001677928096"))
+FORCE_SUB_CHANNEL2 = int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001707354372"))
+FORCE_SUB_CHANNEL3 = int(os.environ.get("FORCE_SUB_CHANNEL3", "-1002340976260"))
+FORCE_SUB_CHANNEL4 = int(os.environ.get("FORCE_SUB_CHANNEL4", "-1001707354372"))
+
+
 SHORTLINK_URL = os.environ.get("SHORTLINK_URL", "adrinolinks.in") 
 SHORTLINK_API = os.environ.get("SHORTLINK_API", "89eebc6996b78477dabf7aebb318fc0e8055e8dc")
 VERIFY_EXPIRE = int(os.environ.get('VERIFY_EXPIRE', 21600)) # Add time in seconds
 IS_VERIFY = os.environ.get("IS_VERIFY", "True")
 TUT_VID = os.environ.get("TUT_VID", "https://t.me/tutorita/11")
+
 
 # ignore this one
 SECONDS = int(os.getenv("SECONDS", "200")) # auto delete in seconds
