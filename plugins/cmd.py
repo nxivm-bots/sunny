@@ -181,7 +181,7 @@ async def my_plan(bot: Bot, message: Message):
             
             buttons = InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("Upgrade Plan", callback_data="show_plans")],
+                    [InlineKeyboardButton("Upgrade Plan", callback_data="premium")],
                     [InlineKeyboardButton("🔒 Close", callback_data="close")],
                     [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
                 ]
@@ -196,7 +196,7 @@ async def my_plan(bot: Bot, message: Message):
             
             buttons = InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("Renew Plan", callback_data="show_plans")],
+                    [InlineKeyboardButton("Renew Plan", callback_data="premium")],
                     [InlineKeyboardButton("🔒 Close", callback_data="close")],
                     [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
                 ]
@@ -208,7 +208,7 @@ async def my_plan(bot: Bot, message: Message):
         
         buttons = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("View Plans", callback_data="show_plans")],
+                [InlineKeyboardButton("View Plans", callback_data="premium")],
                 [InlineKeyboardButton("🔒 Close", callback_data="close")],
                 [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
             ]
@@ -222,7 +222,7 @@ async def my_plan(bot: Bot, message: Message):
 async def show_plans(bot: Bot, message: Message):
     plans_text = PAYMENT_TEXT 
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Pay via UPI", callback_data="upi_info")],
+        [InlineKeyboardButton("Pay via UPI", callback_data="premium")],
         [InlineKeyboardButton("🔒 Close", callback_data="close")],
         [InlineKeyboardButton("Contact Support", url=f"https://t.me/{OWNER}")]
     ])
@@ -231,18 +231,13 @@ async def show_plans(bot: Bot, message: Message):
 # Command to show UPI payment QR code and instructions
 @Bot.on_message(filters.command('upi') & filters.private)
 async def upi_info(bot: Bot, message: Message):
-    await bot.send_photo(
-        chat_id=message.chat.id,
-        photo=PAYMENT_QR,
-        caption=PAYMENT_TEXT,
-        parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("Contact Owner", url=f"https://t.me/{OWNER}")],
-                [InlineKeyboardButton("🔒 Close", callback_data="close")]
-            ]
-        )
-    )
+    plans_text = PAYMENT_TEXT
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("𝖡𝗎𝗒 𝗌𝗎𝖻𝗌𝖼𝗋𝗂𝗉𝗍𝗂𝗈𝗇 | 𝖭𝗈 𝖠𝖽𝗌", callback_data="premium")],
+        [InlineKeyboardButton("Contact Owner", url=f"https://t.me/{OWNER}")],
+        [InlineKeyboardButton("🔒 Close", callback_data="close")]
+    ])
+    await message.reply(plans_text, reply_markup=buttons, parse_mode=ParseMode.HTML)
 
 # Command to retrieve a list of active premium users (admin only)
 @Bot.on_message(filters.private & filters.command('getpremiumusers') & filters.user(ADMINS))
