@@ -104,16 +104,32 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif data == "show_plans":
         await show_plans(client, query.message)
 
-    elif data == "refer":
-        # Since `referral_command` expects `message`, pass the correct `user_id`
-        user_id = query.from_user.id  # Get the user ID from the callback query
-        bot_username = (await client.get_me()).username
-        rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"
+    from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-        await query.message.reply(
-            f"Your referral link:\n{rlink}\n"
-            "Share this link with others to earn benefits!"
-        )
+elif data == "refer":
+    user_id = query.from_user.id
+    bot_username = (await client.get_me()).username
+    rlink = f"https://t.me/{bot_username}?start=refer_{user_id}"
+
+    # Create the inline keyboard with the "Share URL" button
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🔁 Share URL",
+                    url=f'https://telegram.me/share/url?url={rlink}'
+                )
+            ]
+        ]
+    )
+
+    # Send the referral link with the button
+    await query.message.reply(
+        f"Your referral link:\n{rlink}\n"
+        "Share this link with others to earn benefits!",
+        reply_markup=keyboard
+    )
+
 
     elif data == "time":
         # Since `status_command` expects `message`, you need to simulate this from the callback query
