@@ -5,11 +5,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 DEFAULT_CHANNELS = [
-    FORCE_SUB_CHANNEL = int(os.environ.get("FORCE_SUB_CHANNEL", "-1001677928096")),
-    FORCE_SUB_CHANNEL2 = int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001707354372")),
-    FORCE_SUB_CHANNEL3 = int(os.environ.get("FORCE_SUB_CHANNEL3", "-1002340976260")),
-    FORCE_SUB_CHANNEL4 = int(os.environ.get("FORCE_SUB_CHANNEL4", "-1001707354372")),
-
+    int(os.environ.get("FORCE_SUB_CHANNEL", "-1001677928096")),
+    int(os.environ.get("FORCE_SUB_CHANNEL2", "-1001707354372")),
+    int(os.environ.get("FORCE_SUB_CHANNEL3", "-1002340976260")),
+    int(os.environ.get("FORCE_SUB_CHANNEL4", "-1001707354372")),
 ]
 
 
