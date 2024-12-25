@@ -234,7 +234,7 @@ async def start_command(client: Client, message: Message):
                 sent_message = await message.reply("Your token is invalid or expired. Try again by clicking /start.")
                 return
             await update_verify_status(id, is_verified=True, verified_time=time.time())
-            sent_message = await message.reply("Your token was successfully verified and is valid for 24 hours.")
+            sent_message = await message.reply("Your token was successfully verified and is valid for 6 hours.")
 
         
         elif len(message.text) > 7 and (verify_status['is_verified'] or premium_status):
@@ -303,10 +303,8 @@ async def start_command(client: Client, message: Message):
         elif verify_status['is_verified'] or premium_status:
             reply_markup = InlineKeyboardMarkup(
                 [   
-                    [InlineKeyboardButton("Refer Friends", callback_data="refer")],
-                    [InlineKeyboardButton("About Me", callback_data="about"), InlineKeyboardButton("Profile", callback_data="time")],
-                    [InlineKeyboardButton("✨ Premium", callback_data="upi_info"), InlineKeyboardButton("Close", callback_data="close")]
-                    #[InlineKeyboardButton("✨ Premium", callback_data="upi_info")]
+                    [InlineKeyboardButton("Refer Friends", callback_data="refer"), InlineKeyboardButton("Profile", callback_data="time")],
+                    [InlineKeyboardButton("Premium", callback_data="premium"), InlineKeyboardButton("Close", callback_data="close")]
                 ]
             )
 
@@ -330,10 +328,8 @@ async def start_command(client: Client, message: Message):
                 await update_verify_status(id, verify_token=token, link="")
                 link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://telegram.dog/{client.username}?start=verify_{token}')
                 buttons = [
-                    [InlineKeyboardButton("Refer", callback_data="refer")],
-                    #[InlineKeyboardButton("How to use the bot", url=TUT_VID)],
-                    [InlineKeyboardButton("Tutorial", url=TUT_VID), InlineKeyboardButton("Short Link", url=link)],
-                    [InlineKeyboardButton("✨ Premium", callback_data="upi_info")]
+                    [InlineKeyboardButton("￫ 𝖵𝖾𝗋𝗂𝖿𝗒", url=link), InlineKeyboardButton("￫ 𝖳𝗎𝗍𝗈𝗋𝗂𝖺𝗅", url=TUT_VID)],
+                    [InlineKeyboardButton("𝖡𝗎𝗒 𝗌𝗎𝖻𝗌𝖼𝗋𝗂𝗉𝗍𝗂𝗈𝗇 | 𝖭𝗈 𝖠𝖽𝗌", callback_data="premium")]
                 ]
                 verification_message = await message.reply_photo(
                     photo=TOKEN_PIC,  # This can be a URL or a file path
@@ -364,7 +360,7 @@ async def not_joined(client: Client, message: Message):
             InlineKeyboardButton(text="Join Channel", url=client.invitelink2),
         ],
         [
-            InlineKeyboardButton(text="Join Channel", url=client.invitelink3),
+            #InlineKeyboardButton(text="Join Channel", url=client.invitelink3),
             #InlineKeyboardButton(text="Join Channel", url=client.invitelink4),
         ]
     ]
